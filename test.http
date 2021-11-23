@@ -1,0 +1,25 @@
+@smtpHost = smtp.gmail.com
+@smtpPort = 587
+@smtpUser = your@gmail.com
+# Get your app password https://myaccount.google.com/u/1/apppasswords
+@smtpPass = app-password
+# comma separated emails
+@alertEmails = alert@gmail.com
+
+@baseUrl = https://www.google.com
+
+### status=200
+
+GET {{baseUrl}}
+
+### status=200&body=ip
+
+GET https://api64.ipify.org?format=json
+Content-Type: application/json
+
+### body=success
+
+POST https://reqbin.com/echo/post/json
+Content-Type: application/json
+
+{}
