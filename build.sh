@@ -1,4 +1,5 @@
 #!/bin/bash
+
 echo "Building..."
 rm -rf ./build
 GOOS=windows GOARCH=amd64 go build -o build/win/statusalert.exe
