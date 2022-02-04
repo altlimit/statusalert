@@ -128,16 +128,20 @@ func checkAlerts(httpFile, statusFile string) error {
 					Body   string
 				}{Status: 200},
 			}
-			uri, err := url.Parse("https://localhost?" + strings.Trim(line[4:], " "))
-			if err != nil {
-				log.Println("warn: expects must be url encoded key value (status=200&body=Abc")
-				continue
-			}
-			if status, ok := uri.Query()["status"]; ok {
-				currentRequest.Expected.Status, _ = strconv.Atoi(status[0])
-			}
-			if body, ok := uri.Query()["body"]; ok {
-				currentRequest.Expected.Body = body[0]
+			if strings.Trim(line, " ") == "###" {
+				currentRequest.Expected.Status = 200
+			} else {
+				uri, err := url.Parse("https://localhost?" + strings.Trim(line[4:], " "))
+				if err != nil {
+					log.Println("warn: expects must be url encoded key value (status=200&body=Abc")
+					continue
+				}
+				if status, ok := uri.Query()["status"]; ok {
+					currentRequest.Expected.Status, _ = strconv.Atoi(status[0])
+				}
+				if body, ok := uri.Query()["body"]; ok {
+					currentRequest.Expected.Body = body[0]
+				}
 			}
 			startBody = false
 		} else if strings.Index(line, "#") == 0 {
@@ -192,7 +196,6 @@ func checkAlerts(httpFile, statusFile string) error {
 			status, body, err := sendRequest(r)
 			if err != nil {
 				log.Println("request failed", r.Method, r.URL)
-				return
 			}
 			matchStatus := r.Expected.Status == 0 || r.Expected.Status == status
 			matchBody := r.Expected.Body == "" || strings.Contains(body, r.Expected.Body)
