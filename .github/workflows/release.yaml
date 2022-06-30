@@ -3,7 +3,7 @@ on:
   push:
     tags:
       - 'v*'
-    
+
 jobs:
   build:
     name: Create Release
@@ -19,9 +19,9 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             console.log('environment', process.versions);
-            
+
             const fs = require('fs').promises;
-            
+
             const { repo: { owner, repo }, sha } = context;
             console.log({ owner, repo, sha });
             const releaseName = process.env.GITHUB_REF.split('/').pop();
@@ -33,7 +33,7 @@ jobs:
                 body: await fs.readFile('RELEASE.md', 'utf8'),
                 target_commitish: sha
             });
-            console.log('created release', { release });        
+            console.log('created release', { release });
             for (let file of await fs.readdir('./build')) {
                 console.log('uploading', file);
                 await github.repos.uploadReleaseAsset({
@@ -41,5 +41,5 @@ jobs:
                     release_id: release.data.id,
                     name: file,
                     data: await fs.readFile(`./build/${file}`)
-                });            
+                });
             }

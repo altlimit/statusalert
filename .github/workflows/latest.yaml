@@ -1,0 +1,24 @@
+name: "latest-release"
+
+on:
+  push:
+    branches:
+      - "master"
+
+jobs:
+  latest-release:
+    name: "Latest Release"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: "Build"
+        run: ./build.sh
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: false
+          title: "Latest Build"
+          files: |
+            ./build/*
