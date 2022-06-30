@@ -55,6 +55,7 @@ type (
 		Expected struct {
 			Status int
 			Body   string
+			Ignore []string
 		}
 	}
 
@@ -126,6 +127,7 @@ func checkAlerts(httpFile, statusFile string) error {
 				Expected: struct {
 					Status int
 					Body   string
+					Ignore []string
 				}{Status: 200},
 			}
 			if strings.Trim(line, " ") == "###" {
@@ -136,11 +138,15 @@ func checkAlerts(httpFile, statusFile string) error {
 					log.Println("warn: expects must be url encoded key value (status=200&body=Abc")
 					continue
 				}
-				if status, ok := uri.Query()["status"]; ok {
+				q := uri.Query()
+				if status, ok := q["status"]; ok {
 					currentRequest.Expected.Status, _ = strconv.Atoi(status[0])
 				}
-				if body, ok := uri.Query()["body"]; ok {
+				if body, ok := q["body"]; ok {
 					currentRequest.Expected.Body = body[0]
+				}
+				if ig, ok := q["ignore"]; ok {
+					currentRequest.Expected.Ignore = strings.Split(ig[0], ",")
 				}
 			}
 			startBody = false
@@ -195,7 +201,14 @@ func checkAlerts(httpFile, statusFile string) error {
 
 			status, body, err := sendRequest(r)
 			if err != nil {
-				log.Println("request failed", r.Method, r.URL)
+				errS := err.Error()
+				for _, v := range r.Expected.Ignore {
+					if strings.Contains(errS, v) {
+						log.Println("ignored failed request", r.Method, r.URL, errS)
+						return
+					}
+				}
+				log.Println("request failed", r.Method, r.URL, err)
 			}
 			matchStatus := r.Expected.Status == 0 || r.Expected.Status == status
 			matchBody := r.Expected.Body == "" || strings.Contains(body, r.Expected.Body)
@@ -216,6 +229,9 @@ func checkAlerts(httpFile, statusFile string) error {
 					msg += " is up"
 				} else {
 					msg += " is down"
+					if err != nil {
+						msg += "\n - " + err.Error()
+					}
 				}
 				if err := sendEmail(emailConf, alertEmails, msg); err != nil {
 					log.Println("send email error", err)
